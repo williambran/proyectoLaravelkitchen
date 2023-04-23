@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\DB;
 use function GuzzleHttp\Promise\all;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
+
 
 class RecetasController extends Controller
 {
@@ -46,7 +48,7 @@ class RecetasController extends Controller
     {
         //una forma de sacar datos, desde el controller
         // DB::table('categoria_receta')->get()->pluck('nombre','id')->dd();
-       
+
         //obtener categorias sin moelo. Directo de la base de datos
         //$categorias = DB::table('categoria_recetas')->get()->pluck('nombre','id');
 
@@ -102,8 +104,8 @@ class RecetasController extends Controller
             'ingredientes' => $data['ingredientes'],
             'imagen' => $ruta_imagen,
             'categoria_id' => $data['categoria']
-            
-            
+
+
     ]);
 
 
@@ -134,10 +136,10 @@ class RecetasController extends Controller
        $likes = $receta->likes()->count();
 
         return view('recetas.show', compact('receta', 'like', 'likes','onSession') );
-        
+
     }
 
-    /** 
+    /**
      * Show the form for editing the specified resource.
      *
      * @param  int  $id
@@ -147,10 +149,10 @@ class RecetasController extends Controller
     {
         //validar que solo el propietario puedea editarlo con ayuda de Policy
 
-       
+
         $categorias = CategoriaReceta::all(['id', 'nombre']);
         $receta = Receta::findOrFail($id);
-        $this->authorize('view',$receta);  //sacamos la receta por el id, y se lo enviamos al policy para comprobar si es del usuario la receta a editar 
+        $this->authorize('view',$receta);  //sacamos la receta por el id, y se lo enviamos al policy para comprobar si es del usuario la receta a editar
        // dd($receta);
         return view('recetas.edit', compact('categorias', 'receta'));
     }
@@ -158,7 +160,7 @@ class RecetasController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request,en el reuqest va la informacion a acualizar 
+     * @param  \Illuminate\Http\Request  $request,en el reuqest va la informacion a acualizar
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
@@ -175,9 +177,9 @@ class RecetasController extends Controller
             'ingredientes'=>'required',
             'categoria' =>'required '
         ]);
-     
+
         //Asignacion de valores
-        
+
         $receta->titulo = $data['titulo'];
         $receta->preparacion = $data['preparacion'];
         $receta->ingredientes = $data['ingredientes'];
@@ -192,16 +194,27 @@ class RecetasController extends Controller
         $ruta_imagen = $request['imagen']->store('upload-recetas','public');
 
         //importamos y usamos la clase Image de libreria intervation
-        $img = Image::make(public_path("storage/{$ruta_imagen}"))->fit(550,550);
+        $img = Image::make(public_path("storage/{$ruta_imagen}"))->fit(1000,1553);
 
         $img->save();
 
-        //asignamos 
+        //asignamos
         $receta->imagen = $ruta_imagen;
-        }
+      }
+
+/*
+        $manager = new ImageManager();
+        $source= $request['imagen'];
+        $destinationImagen = public_path("storage/{$ruta_imagen}");
+
+
+        $img = $manager->make($source)->resize(50,null);
+
+        $img->save($destinationImagen);
+
 
         $receta->save();
-        return redirect()->action('RecetasController@index');
+        return redirect()->action('RecetasController@index');*/
     }
 
     /**
@@ -216,7 +229,7 @@ class RecetasController extends Controller
         //Ejecutar el policy
         $this->authorize('delete',$receta);
         $receta->delete();
-        
+
         return redirect()->action('RecetasController@index');
 
     }
